@@ -1,0 +1,93 @@
+version: "3"
+services:
+  mysql-users:
+    image: 'mysql:5.7'
+    container_name: db-users3
+
+    volumes:
+      - ./data/db-users3:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "secret"
+
+  mysql-messages-shard1:
+    image: 'mysql:5.7'
+    container_name: db-messages-shard1
+    volumes:
+      - ./data/db-messages-shard1:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "secret"
+    ports:
+      - 3360:3306
+
+  mysql-messages-shard2:
+    image: 'mysql:5.7'
+    container_name: db-messages-shard2
+    volumes:
+      - ./data/db-messages-shard2:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "secret"
+    ports:
+      - 3361:3306
+
+  proxysql:
+    image: proxysql/proxysql:2.0.13
+    container_name: proxysql
+    volumes:
+      - ./proxysql/proxysql.cnf:/etc/proxysql.cnf
+    depends_on:
+      - mysql-messages-shard1
+      - mysql-messages-shard2
+    ports:
+      # Mysql Client Port
+      - "6033:6033"
+      # Mysql Admin Port
+      - "6032:6032"
+
+
+  social-networks-chat:
+    build: ./
+    ports:
+      - '8888:8888'
+    volumes:
+      - ./:/app
+    depends_on:
+      - mysql-users
+      - proxysql
+#      - mysql-messages-shard1
+#      - mysqlread2
+#    env_file: .env
+    environment:
+      - PORT=8888
+      - RUN_IN_DOCKER=1
+
+      - DB_USERS_HOST=mysql-users
+      - DB_USERS_PORT=3306
+      - DB_USERS_DATABASE=go-site
+      - DB_USERS_USERNAME=root
+      - DB_USERS_PASSWORD=secret
+
+      - DB_MESSAGES1_HOST=mysql-messages-shard1
+      - DB_MESSAGES1_PORT=3306
+      - DB_MESSAGES1_DATABASE=go-site
+      - DB_MESSAGES1_USERNAME=root
+      - DB_MESSAGES1_PASSWORD=secret
+
+      - DB_MESSAGES2_HOST=mysql-messages-shard2
+      - DB_MESSAGES2_PORT=3306
+      - DB_MESSAGES2_DATABASE=go-site
+      - DB_MESSAGES2_USERNAME=root
+      - DB_MESSAGES2_PASSWORD=secret
+
+      - DB_PROXY_HOST=proxysql
+      - DB_PROXY_PORT=6033
+      - DB_PROXY_DATABASE=go-site
+      - DB_PROXY_USERNAME=root
+      - DB_PROXY_PASSWORD=secret
+
+      - SQL_MAX_OPEN_CONNECT=5
+      - SQL_MAX_IDLE_CONNECT=5
+      - SQL_MAX_LIFE_CONNECT=3600
+      - SECRET_KEY=54325432fds542543a
+      - JWT_TOKEN_EXPIRES_MINUTE=50
+volumes:
+  proxysql-data:
