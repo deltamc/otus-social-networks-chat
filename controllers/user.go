@@ -29,7 +29,6 @@ func HandleUsers(w http.ResponseWriter, r *http.Request) {
 	responses.ResponseJson(w, userList)
 }
 
-
 func HandleFriends(w http.ResponseWriter, r *http.Request, user users.User) {
 	userList, err := user.GetFriends()
 	if err != nil {
@@ -50,12 +49,12 @@ func HandleProfile(w http.ResponseWriter, r *http.Request, user users.User) {
 	age, _ := strconv.ParseInt(r.FormValue("age"), 10, 64)
 	sex, _ := strconv.ParseInt(r.FormValue("sex"), 10, 64)
 
-	user.FirstName =  r.FormValue("first_name")
-	user.LastName =  r.FormValue("last_name")
-	user.Interests =  r.FormValue("interests")
-	user.City =  r.FormValue("city")
-	user.Age =  age
-	user.Sex =  sex
+	user.FirstName = r.FormValue("first_name")
+	user.LastName = r.FormValue("last_name")
+	user.Interests = r.FormValue("interests")
+	user.City = r.FormValue("city")
+	user.Age = age
+	user.Sex = sex
 
 	err := user.Save()
 	if err != nil {
@@ -100,7 +99,3 @@ func HandleMakeFriend(w http.ResponseWriter, r *http.Request, user users.User) {
 	return
 
 }
-
-
-
-

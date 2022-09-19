@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/deltamc/otus-social-networks-chat/routes"
+	"fmt"
+	"github.com/deltamc/otus-social-networks-users/routes"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
@@ -9,7 +10,7 @@ import (
 )
 
 func init() {
-	if  len(os.Getenv("RUN_IN_DOCKER")) > 0 {
+	if len(os.Getenv("RUN_IN_DOCKER")) > 0 {
 		return
 	}
 
@@ -23,6 +24,6 @@ func init() {
 func main() {
 	routes.Public()
 	routes.Auth()
-
-	log.Fatal(http.ListenAndServe(":" + os.Getenv("PORT"), nil))
+	fmt.Println(os.Getenv("PORT"))
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), nil))
 }
