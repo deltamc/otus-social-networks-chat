@@ -1,15 +1,15 @@
 package middlewares
 
 import (
-	"github.com/deltamc/otus-social-networks-chat/auth"
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"github.com/deltamc/otus-social-networks-chat/models/users"
 	"github.com/deltamc/otus-social-networks-chat/responses"
-	"github.com/dgrijalva/jwt-go/v4"
+	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 )
-
 
 func Jwt(h handlerAuth) handler {
 
@@ -21,46 +21,35 @@ func Jwt(h handlerAuth) handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+		usersUrl := fmt.Sprintf("%s/getUserByToken", os.Getenv("USER_SERVICE"))
 
-		headerParts := strings.Split(authHeader, " ")
-		if len(headerParts) != 2 {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		if headerParts[0] != "Bearer" {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		var jwtKey = []byte(os.Getenv("SECRET_KEY"))
-
-		tknStr := headerParts[1]
-		claims := &auth.Claims{}
-		tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
-		if err != nil {
-			if err == jwt.ErrSignatureInvalid {
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		if !tkn.Valid {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		user, err := users.GetUserById(claims.UserId)
+		req, err := http.NewRequest("GET", usersUrl, bytes.NewBuffer([]byte("")))
 
 		if err != nil {
 			responses.Response500(w, err)
+			return
 		}
 
+		req.Header.Set("Authorization", authHeader)
+		req.Header.Set("Content-Type", "application/json")
 
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			responses.Response500(w, err)
+			return
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			w.WriteHeader(resp.StatusCode)
+			return
+		}
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		var user users.User
+		json.Unmarshal(body, &user)
 
 		h(w, r, user)
 	}

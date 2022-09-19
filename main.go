@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	if  len(os.Getenv("RUN_IN_DOCKER")) > 0 {
+	if len(os.Getenv("RUN_IN_DOCKER")) > 0 {
 		return
 	}
 
@@ -21,8 +21,6 @@ func init() {
 }
 
 func main() {
-	routes.Public()
 	routes.Auth()
-
-	log.Fatal(http.ListenAndServe(":" + os.Getenv("PORT"), nil))
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), nil))
 }
